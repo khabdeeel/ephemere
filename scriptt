@@ -1,0 +1,103 @@
+import paramiko
+import time
+
+# add code to import these credentials from the csv file
+
+#importing pandas as pd
+import pandas as pd
+
+import csv
+
+# Read and store content
+# of an excel file
+read_file = pd.read_excel ("test1.xlsx")
+
+# Write the dataframe object
+# into csv file
+read_file.to_csv ("Test.csv",
+				index = None,
+				header=True)
+	
+# read csv file and convert
+# into a dataframe object
+df = pd.DataFrame(pd.read_csv("Test.csv"))
+csv_data = df.to_csv(columns=['nom du firewall', 'adresse ip correspondante','login','password'])
+#print(csv_data)
+
+# show the dataframe
+df
+
+fileconnection = open("Test.csv", 'r')
+lines = fileconnection.readlines()
+header = lines[0]
+field_names = header.strip().split(',')
+#print(field_names)
+for row in lines[1:2]:
+    vals = row.strip().split(',')
+    
+    host=vals[1]  #ipadress
+    user=vals[2]  #login
+    passx=vals[3] #password
+    
+
+host='140.82.3.191'
+user='hatim'
+passx='testynwi613'
+
+
+# add code here to bring commands from the csv file
+commands = ["mkdir folder","cd folder", "echo 'file created successfuly' > files.txt", "ls", "cd ..", "ls"]
+
+client = paramiko.SSHClient()
+client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+client.connect(host, username=user, password=passx)
+
+
+
+    # write the header
+
+    # write the data
+
+csv_list = []
+csv_header = []
+
+# matrix[len(commands)][1]
+matrix=[[]]
+for x in range(len(commands)):
+    matrix.append([])
+    for y in range(0,2):
+        matrix[x].append(0)
+# matrix=[[]]
+i=0
+for command in commands:
+    print(command)
+    output = []
+    # matrix.append([command])
+    matrix[i][0]=command
+    stdin, stdout, stderr = client.exec_command(command)
+    j=0
+
+    for line in stdout:
+        # print(len(line.strip("\n")))
+        if (len(line.strip("\n"))):
+            output.append(line.strip("\n"))
+        # print(output)
+        j += 1
+    matrix[i][1]=output
+    time.sleep(.01)
+    i += 1
+
+with open("output.csv", 'w') as outcsv:   
+    #configure writer to write standard csv file
+    writer = csv.writer(outcsv, delimiter=',', quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
+    writer.writerow(['command', 'output'])
+    for row_index in range(len(matrix)-1):
+        #Write item to outcsv
+        writer.writerow([matrix[row_index][0], matrix[row_index][1]])
+
+
+
+for row in matrix:
+    print(row)
+# print(matrix)
+client.close()
